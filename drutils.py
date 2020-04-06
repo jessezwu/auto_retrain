@@ -1,4 +1,5 @@
 import datarobot as dr
+import pandas as pd
 import json
 import requests
 import sys
@@ -73,31 +74,19 @@ def _raise_dataroboterror_for_status(response):
             code=response.status_code, msg=response.text)
         raise DataRobotPredictionError(err_msg)
  
- 
-def main(filename, deployment_id, forecast_point):
-    """
-    Return an exit code on script completion or error. Codes > 0 are errors to the shell.
-    Also useful as a usage demonstration of
-    `make_datarobot_deployment_predictions(data, deployment_id)`
-    """
-    if not filename:
-        print(
-            'Input file is required argument. \n'
-            'Usage: python datarobot-predict.py '
-            '<input-file.csv> --forecast_point <forecast-point>')
-        return 1
-    data = open(filename, 'rb').read()
-    data_size = sys.getsizeof(data)
-    if data_size >= MAX_PREDICTION_FILE_SIZE_BYTES:
-        print(
-            'Input file is too large: {} bytes. '
-            'Max allowed size is: {} bytes.'
-        ).format(data_size, MAX_PREDICTION_FILE_SIZE_BYTES)
-        return 1
-    try:
-        predictions = make_datarobot_deployment_predictions(data, deployment_id, forecast_point)
-    except DataRobotPredictionError as exc:
-        print(exc)
-        return 1
-    print(json.dumps(predictions))
-    return 0
+
+def parse_dr_predictions(raw, timeseries=False, passthrough=False):
+    """Convert json to pandas dataframe"""
+    preds = raw['data']
+    keep_cols = []
+    if passthrough:
+        keep_cols.append('passthroughValue')
+    if timeseries:
+        keep_cols = keep_cols + ['forecastPoint', 'timestamp', 'series']
+    else:
+        keep_cols.append('rowId')
+    return pd.io.json.json_normalize(preds,
+                                     'predictionValues',
+                                     keep_cols,
+                                     errors='ignore')
+

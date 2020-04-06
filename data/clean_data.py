@@ -9,4 +9,4 @@ df = df[df['Country/Region'] == 'Australia'] \
         .drop(columns='variable') \
         .rename(columns={'value': 'cases'})
 
-df.to_csv('australian_cases.csv')
+df.to_csv('australian_cases.csv', index=False)

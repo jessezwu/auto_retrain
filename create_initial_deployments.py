@@ -79,8 +79,11 @@ for s in df[series].unique():
             description='Australian coronavirus cases',
             default_prediction_server_id=prediction_server.id)
     # ensure deployment settings are turned on
-    deployment.update_drift_tracking_settings(target_drift_enabled=True, feature_drift_enabled=True, max_wait=60)
-    deployment.update_association_id_settings(column_names=['id'], required_in_prediction_requests=True, max_wait=60)
+    deployment.update_drift_tracking_settings(target_drift_enabled=True,
+                                              feature_drift_enabled=True,
+                                              max_wait=60)
+    deployment.update_association_id_settings(
+        column_names=['id'], required_in_prediction_requests=True, max_wait=60)
     # get metric for parent of frozen model
     parent = du.get_parent_model(model)
     # store information for later use
@@ -92,4 +95,4 @@ for s in df[series].unique():
             'error': parent.metrics['MAE']['crossValidation']
         }]))
 
-reference.to_csv(ref_file)
+reference.to_csv(ref_file, index=False)
