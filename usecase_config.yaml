@@ -10,6 +10,8 @@ series: 'Province/State'
 
 # project setup
 metric: 'MAE'
+backtests: 2
+backtest_length: 7
 fdw: -14
 history: 28
 horizon: 3
@@ -17,3 +19,8 @@ states: ['New South Wales', 'Victoria', 'Queensland', 'South Australia']
 
 # deployment
 description: 'Australian Coronavirus cases'
+
+# retraining
+accuracy_days: 3
+run_autopilot: False
+n_models: 5

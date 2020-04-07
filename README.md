@@ -4,12 +4,12 @@ This repository is intended to be used as a starting template to setup a pipelin
 
 The dataset used is sourced from the John Hopkins University COVID-19 repository [here](https://github.com/CSSEGISandData/COVID-19). A number of example timeseries models are built on each of the Australian states, and deployments are created for each. A text file is used to store the deployment ids and corresponding state (in reality this would likely be stored in a table or elsewhere).
 
-On an ongoing basis, cron jobs are run to:
+This project was set up in April 2020, as daily case numbers were being updated. On an ongoing basis, cron jobs can be set up to:
 
-* make predictions for the next day
 * pull the latest data, and upload as actuals to the respective deployments
 * compare accuracy of models against actuals, and
     * retrain and redeploy if recent performance exceeds a threshold
+* make predictions for the next day
 
 
 ## Installation
@@ -38,12 +38,14 @@ Note that this creates a number of autopilot projects, and so will take some tim
 
 Add these lines to your user crontab
 ```
-# refresh data every night at 21:00
-0 21 * * * <full_path>/run_data_extract.sh
-# make predictions for tomorrow
-5 21 * * * <full_path>/run_predictions.sh
+# refresh data every night at 20:00
+0 20 * * * <full_path>/run_data_extract.sh
 # update actuals for past predictions
-10 21 * * * <full_path>/run_actuals_upload.sh
+5 20 * * * <full_path>/run_actuals_upload.sh
+# update deployments if necessary
+10 20 * * * <full_path>/run_accuracy_check.sh
+# make predictions for tomorrow
+0 21 * * * <full_path>/run_predictions.sh
 ```
 
 These scripts all source your bash profile before running, to emulate your user environment. Change as necessary.

@@ -3,6 +3,7 @@ import pandas as pd
 import yaml
 import json
 import requests
+import time
 import sys
 
 
@@ -11,6 +12,16 @@ def load_config(filename):
     with open(filename, 'r') as of:
         config = yaml.load(of, Loader=yaml.BaseLoader)
     return config
+
+
+def get_existing_project(proj_name):
+    built_projects = dr.Project.list()
+    built_names = [p.project_name for p in built_projects]
+    # new project name
+    if proj_name in built_names:
+        return built_projects[built_names.index(proj_name)]
+    else:
+        return None
 
 
 def get_parent_model(model):
@@ -112,3 +123,70 @@ def parse_dr_predictions(raw, timeseries=False, passthrough=False):
                                      'predictionValues',
                                      keep_cols,
                                      errors='ignore')
+
+
+def setup_basic_time_spec(cf):
+    """
+    Basic spec for timeseries, using a config.
+    Assumes daily data, and no gap to prediction window.
+    """
+    spec = dr.DatetimePartitioningSpecification(
+        cf['timecol'], use_time_series=True, default_to_known_in_advance=False)
+    # disable holdout
+    spec.disable_holdout = True
+    # backtest options
+    spec.number_of_backtests = int(cf['backtests'])
+    spec.validation_duration = dr.partitioning_methods.construct_duration_string(
+        days=int(cf['backtest_length']))
+    # windows
+    spec.feature_derivation_window_start = int(cf['fdw'])
+    spec.feature_derivation_window_end = 0
+    spec.forecast_window_start = 1
+    spec.forecast_window_end = int(cf['horizon'])
+    return spec
+
+
+def get_feature_list(project, old_project, model):
+    """Get or recreate a featurelist from another project"""
+    flists = project.get_modeling_featurelists()
+    match = [f for f in flists if model.featurelist_name == f.name]
+    if len(match) > 0:
+        f_id = match[0].id
+    else:
+        features = dr.Featurelist.get(old_project.id,
+                                      model.featurelist_id).features
+        match = [f for f in flists if features == f.features]
+        if len(match) > 0:
+            f_id = match[0].id
+        else:
+            f_id = project.create_modeling_featurelist(
+                'p:' + old_project.id + ' m:' + model.id, features)
+    return f_id
+
+
+def retrain_models(project, old_project, models):
+    """
+    Retrain a list of models in a new project.
+    Both projects must have been built from the same data otherwise errors will
+    be raised when trying to match feature lists.
+    """
+    for m in models:
+        featurelist = get_feature_list(project, old_project, m)
+        try:
+            job = project.train_datetime(m.blueprint_id,
+                                         featurelist_id=featurelist,
+                                         source_project_id=project.id)
+        except:
+            pass
+    while len(project.get_model_jobs()) > 0:
+        time.sleep(10)
+    models = [
+        dr.DatetimeModel.get(project.id, m.id) for m in project.get_models()
+    ]
+    try:
+        jobs = [m.score_backtests() for m in models]
+    except:
+        pass
+    while len(project.get_model_jobs()) > 0:
+        time.sleep(10)
+    return project.get_models()

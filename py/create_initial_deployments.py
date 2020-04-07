@@ -18,28 +18,9 @@ df = df[df[cf['series']].isin(cf['states'])]
 
 ################################################################################
 # project setup
+spec = du.setup_basic_time_spec(cf)
 
-spec = dr.DatetimePartitioningSpecification(cf['timecol'],
-                                            use_time_series=True,
-                                            default_to_known_in_advance=False)
-# disable holdout
-spec.disable_holdout = True
-# backtest options
-spec.number_of_backtests = 2
-spec.validation_duration = dr.partitioning_methods.construct_duration_string(
-    days=7)
-# windows
-spec.feature_derivation_window_start = int(cf['fdw'])
-spec.feature_derivation_window_end = 0
-spec.forecast_window_start = 1
-spec.forecast_window_end = int(cf['horizon'])
-
-################################################################################
-
-# list currently built projects - don't retrain if project already exists
-built_projects = dr.Project.list()
-built_names = [p.project_name for p in built_projects]
-# same list for deployments
+# check existing deployments
 deployments = dr.Deployment.list()
 deployment_names = [d.label for d in deployments]
 
@@ -54,10 +35,8 @@ for s in df[cf['series']].unique():
     subdf = df[df[cf['series']] == s]
     print('creating deployment for ' + s)
     # get or create project
-    if proj_name in built_names:
-        # take existing project
-        project = built_projects[built_names.index(proj_name)]
-    else:
+    project = du.get_existing_project(proj_name)
+    if project is None:
         # upload data and create project
         project = dr.Project.create(subdf, project_name=proj_name)
         # finalise project, and run autopilot with max workers
