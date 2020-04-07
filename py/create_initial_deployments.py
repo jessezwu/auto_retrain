@@ -9,8 +9,8 @@ import pandas as pd
 import drutils as du
 
 # setup
-cf = du.load_config('usecase_config.yaml')
-dr.Client(config_path='drconfig.yaml')
+cf = du.load_config('../usecase_config.yaml')
+dr.Client(config_path='../drconfig.yaml')
 
 df = pd.read_csv(cf['dataset'])
 # optional filtering to reduce deployments

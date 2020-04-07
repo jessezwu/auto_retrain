@@ -23,23 +23,27 @@ Update your API token and install location
 
 ```
 pip install -r requirements.txt
-./data/pull_data.sh
 ```
 
 ## Running
 
 For initial setup run
 ```
-./pull_data.sh
+./run_data_extract.sh
+cd py
 python create_initial_deployments.py
 ```
 
 Note that this creates a number of autopilot projects, and so will take some time to run - you can restrict the number of states to speed things up.
 
-Add these lines to your crontab
+Add these lines to your user crontab
 ```
 # refresh data every night at 21:00
 0 21 * * * <full_path>/run_data_extract.sh
 # make predictions for tomorrow
 5 21 * * * <full_path>/run_predictions.sh
+# update actuals for past predictions
+10 21 * * * <full_path>/run_actuals_upload.sh
 ```
+
+These scripts all source your bash profile before running, to emulate your user environment. Change as necessary.

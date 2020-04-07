@@ -1,7 +1,7 @@
 # data
-dataset: 'data/australian_cases.csv'
-ref_file: 'reference.csv'
-out_file: 'data/scores.csv'
+dataset: '../data/australian_cases.csv'
+ref_file: '../reference.csv'
+out_file: '../data/scores.csv'
 
 # columns
 timecol: 'date'

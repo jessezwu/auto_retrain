@@ -4,16 +4,15 @@ Uses a reference file to identify what predictions need to be made, and the
 associated deployments.
 """
 
-import datarobot as dr
 import pandas as pd
 import drutils as du
 import yaml
 
 # setup
-cf = du.load_config('usecase_config.yaml')
+cf = du.load_config('../usecase_config.yaml')
 
 # credentials
-token = du.load_config('drconfig.yaml')['token']
+token = du.load_config('../drconfig.yaml')['token']
 url, pred_key = du.get_default_pred_server_info()
 
 ################################################################################
@@ -33,9 +32,13 @@ for idx, row in reference.iterrows():
             .sort_values(cf['timecol']) \
             .tail(int(cf['history']))
     predict_date = max(pred_data[cf['timecol']])
+    future_dates = pd.date_range(predict_date,
+                                 periods=int(cf['horizon']) + 1,
+                                 freq='D',
+                                 closed='right')
     pred_data = pred_data.append(
             pd.DataFrame({
-                cf['timecol']: pd.date_range(predict_date, periods=int(cf['horizon'])+1, freq='D', closed='right').strftime('%Y-%m-%d'),
+                cf['timecol']: future_dates.strftime('%Y-%m-%d'),
                 cf['series']: row['use_case']
             }), sort=False) \
             .assign(id = lambda x: x[cf['series']] + ' ' + x[cf['timecol']])

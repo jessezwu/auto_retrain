@@ -7,7 +7,8 @@ import pandas as pd
 import drutils as du
 
 # setup
-cf = du.load_config('usecase_config.yaml')
+cf = du.load_config('../usecase_config.yaml')
+dr.Client(config_path='../drconfig.yaml')
 
 ################################################################################
 
@@ -23,10 +24,10 @@ if len(df) == 0:
     exit()
 
 df = df.assign(id = lambda x: x[cf['series']] + ' ' + x[cf['timecol']]) \
-        .loc[:, [cf['target'], 'id']] \
+        .loc[:, [cf['series'], cf['target'], 'id']] \
         .rename(columns={'cases': 'actual_value', 'id': 'association_id'})
 
 for idx, row in reference.iterrows():
     actuals = df[df[cf['series']] == row['use_case']]
-    deployment = Deployment.get(deployment_id=row['deployment_id'])
-    deployment.submit_actuals(actuals)
+    deployment = dr.Deployment.get(deployment_id=row['deployment_id'])
+    deployment.submit_actuals(actuals.drop(columns=cf['series']))
