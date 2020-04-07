@@ -30,7 +30,16 @@ pip install -r requirements.txt
 
 For initial setup run
 ```
+./pull_data.sh
 python create_initial_deployments.py
 ```
 
+Note that this creates a number of autopilot projects, and so will take some time to run - you can restrict the number of states to speed things up.
 
+Add these lines to your crontab
+```
+# refresh data every night at 21:00
+0 21 * * * <full_path>/run_data_extract.sh
+# make predictions for tomorrow
+5 21 * * * <full_path>/run_predictions.sh
+```

@@ -1,17 +1,28 @@
 import datarobot as dr
 import pandas as pd
+import yaml
 import json
 import requests
 import sys
 
+
+def load_config(filename):
+    """Open and read a yaml config"""
+    with open(filename, 'r') as of:
+        config = yaml.load(of, Loader=yaml.BaseLoader)
+    return config
+
+
 def get_parent_model(model):
     """Get parent model if one exists"""
     try:
-        parent_id = dr.FrozenModel.get(model.project_id, model.id).parent_model_id
+        parent_id = dr.FrozenModel.get(model.project_id,
+                                       model.id).parent_model_id
         parent = dr.Model.get(model.project_id, parent_id)
         return parent
     except:
         return model
+
 
 def get_default_pred_server_info():
     """Get details for default prediction server"""
@@ -22,13 +33,18 @@ def get_default_pred_server_info():
         return (pred_endpoint, pred_key)
     except:
         raise Exception("No prediction server found")
-    
- 
+
+
 class DataRobotPredictionError(Exception):
     """Raised if there are issues getting predictions from DataRobot"""
- 
- 
-def make_timeseries_prediction(data, url, deployment_id, token, key, forecast_point=None):
+
+
+def make_timeseries_prediction(data,
+                               url,
+                               deployment_id,
+                               token,
+                               key,
+                               forecast_point=None):
     """
     Make predictions on data provided using DataRobot deployment_id provided.
     See docs for details:
@@ -54,26 +70,33 @@ def make_timeseries_prediction(data, url, deployment_id, token, key, forecast_po
     DataRobotPredictionError if there are issues getting predictions from DataRobot
     """
     # Set HTTP headers. The charset should match the contents of the file.
-    headers = {'Content-Type': 'text/plain; charset=UTF-8', 'datarobot-key': key, 'Authorization': 'Token {}'.format(token)}
-    url = '{url}/predApi/v1.0/deployments/{deployment_id}/timeSeriesPredictions'.format(url=url, deployment_id=deployment_id)
+    headers = {
+        'Content-Type': 'text/plain; charset=UTF-8',
+        'datarobot-key': key,
+        'Authorization': 'Token {}'.format(token)
+    }
+    url = '{url}/predApi/v1.0/deployments/{deployment_id}/timeSeriesPredictions'.format(
+        url=url, deployment_id=deployment_id)
     params = {'forecastPoint': forecast_point}
     # Make API request for predictions
-    predictions_response = requests.post(
-        url, data=data, headers=headers, params=params)
+    predictions_response = requests.post(url,
+                                         data=data,
+                                         headers=headers,
+                                         params=params)
     _raise_dataroboterror_for_status(predictions_response)
     # Return a Python dict following the schema in the documentation
     return predictions_response.json()
- 
- 
+
+
 def _raise_dataroboterror_for_status(response):
     """Raise DataRobotPredictionError if the request fails along with the response returned"""
     try:
         response.raise_for_status()
     except requests.exceptions.HTTPError:
-        err_msg = '{code} Error: {msg}'.format(
-            code=response.status_code, msg=response.text)
+        err_msg = '{code} Error: {msg}'.format(code=response.status_code,
+                                               msg=response.text)
         raise DataRobotPredictionError(err_msg)
- 
+
 
 def parse_dr_predictions(raw, timeseries=False, passthrough=False):
     """Convert json to pandas dataframe"""
@@ -89,4 +112,3 @@ def parse_dr_predictions(raw, timeseries=False, passthrough=False):
                                      'predictionValues',
                                      keep_cols,
                                      errors='ignore')
-

@@ -1,48 +1,44 @@
+"""
+Make predictions using deployed DataRobot models.
+Uses a reference file to identify what predictions need to be made, and the
+associated deployments.
+"""
+
 import datarobot as dr
 import pandas as pd
 import drutils as du
 import yaml
 
 # setup
-dataset = 'data/australian_cases.csv'
-ref_file = 'reference.csv'
-out_file = 'data/scores.csv'
+cf = du.load_config('usecase_config.yaml')
 
-timecol = 'date'
-target = 'cases'
-series = 'Province/State'
-history = 28
-horizon = 3
-
-with open('drconfig.yaml', 'r') as of:
-    config = yaml.load(of, Loader=yaml.BaseLoader)
+# credentials
+token = du.load_config('drconfig.yaml')['token']
+url, pred_key = du.get_default_pred_server_info()
 
 ################################################################################
 
-# credentials
-token = config['token']
-url, pred_key = du.get_default_pred_server_info()
-
 # dataframes
-df = pd.read_csv(dataset)
-reference = pd.read_csv(ref_file)
+df = pd.read_csv(cf['dataset'])
+reference = pd.read_csv(cf['ref_file'])
 try:
-    output = pd.read_csv(out_file).drop_duplicates()
+    output = pd.read_csv(cf['out_file']).drop_duplicates()
 except:
     output = pd.DataFrame()
 
+# iterate through deployments
 for idx, row in reference.iterrows():
     # generate prediction dataset with association id
-    pred_data = df[df[series] == row['use_case']] \
-            .sort_values(timecol) \
-            .tail(history)
-    predict_date = max(pred_data[timecol])
+    pred_data = df[df[cf['series']] == row['use_case']] \
+            .sort_values(cf['timecol']) \
+            .tail(int(cf['history']))
+    predict_date = max(pred_data[cf['timecol']])
     pred_data = pred_data.append(
             pd.DataFrame({
-                timecol: pd.date_range(predict_date, periods=horizon+1, freq='D', closed='right').strftime('%Y-%m-%d'),
-                series: row['use_case']
+                cf['timecol']: pd.date_range(predict_date, periods=int(cf['horizon'])+1, freq='D', closed='right').strftime('%Y-%m-%d'),
+                cf['series']: row['use_case']
             }), sort=False) \
-            .assign(id = lambda x: x[series] + ' ' + x[timecol])
+            .assign(id = lambda x: x[cf['series']] + ' ' + x[cf['timecol']])
     # call deployment
     response = du.make_timeseries_prediction(pred_data.to_csv(index=False),
                                              url, row['deployment_id'], token,
@@ -52,4 +48,5 @@ for idx, row in reference.iterrows():
             .assign(series = row['use_case'])
     output = output.append(preds)
 
-output.drop_duplicates().to_csv(out_file, index=False)
+# write scores
+output.round(2).drop_duplicates().to_csv(cf['out_file'], index=False)

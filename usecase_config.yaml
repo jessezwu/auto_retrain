@@ -1,0 +1,19 @@
+# data
+dataset: 'data/australian_cases.csv'
+ref_file: 'reference.csv'
+out_file: 'data/scores.csv'
+
+# columns
+timecol: 'date'
+target: 'cases'
+series: 'Province/State'
+
+# project setup
+metric: 'MAE'
+fdw: -14
+history: 28
+horizon: 3
+states: ['New South Wales', 'Victoria', 'Queensland', 'South Australia']
+
+# deployment
+description: 'Australian Coronavirus cases'
