@@ -24,6 +24,7 @@ def is_accurate(deployment, start, end, baseline, err=True):
     accuracy = deployment.get_accuracy_over_time(metric=cf['metric'],
                                                  start_time=start,
                                                  end_time=end)
+    baseline = baseline * 1.2
     if accuracy.summary['value'] is None:
         return True
     if err:

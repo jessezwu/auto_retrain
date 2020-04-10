@@ -119,10 +119,10 @@ def parse_dr_predictions(raw, timeseries=False, passthrough=False):
         keep_cols = keep_cols + ['forecastPoint', 'timestamp', 'series']
     else:
         keep_cols.append('rowId')
-    return pd.io.json.json_normalize(preds,
-                                     'predictionValues',
-                                     keep_cols,
-                                     errors='ignore')
+    return pd.json_normalize(preds,
+                             'predictionValues',
+                             keep_cols,
+                             errors='ignore')
 
 
 def setup_basic_time_spec(cf):

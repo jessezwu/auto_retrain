@@ -1,4 +1,3 @@
-datarobot
-pandas
-numpy
-json
+datarobot>=2.19.0
+pandas>=1.0.3
+numpy>=1.18.0
