@@ -14,7 +14,7 @@ dr.Client(config_path='../drconfig.yaml')
 
 df = pd.read_csv(cf['dataset'])
 # optional filtering to reduce deployments
-df = df[df[cf['series']].isin(cf['states'])]
+df = df[df[cf['series']].isin(cf['filter'])]
 
 ################################################################################
 # project setup

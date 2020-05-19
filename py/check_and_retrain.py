@@ -20,11 +20,14 @@ def is_accurate(deployment, start, end, baseline, err=True):
     """
     Compare accuracy of a deployment within start and end times to a baseline,
     return False if outside baseline error.
+    If `err` is set to True, assumes an error metric (lower is better),
+    otherwise the higher the performance the better.
     """
     accuracy = deployment.get_accuracy_over_time(metric=cf['metric'],
                                                  start_time=start,
                                                  end_time=end)
-    baseline = baseline * 1.2
+    # optionally add your own custom logic or thresholding
+    # e.g. baseline = baseline * 1.2
     if accuracy.summary['value'] is None:
         return True
     if err:
